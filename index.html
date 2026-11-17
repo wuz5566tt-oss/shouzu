@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0c0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="收租帳本">
+<meta name="color-scheme" content="dark">
+<title>收租帳本</title>
+<style>
+:root{
+  --ink:#0b0c0f;--ink2:#121318;--ink3:#191b21;
+  --glass:rgba(255,255,255,.035);--glass2:rgba(255,255,255,.06);
+  --line:rgba(214,186,130,.16);--line2:rgba(255,255,255,.07);
+  --gold:#d6b97f;--gold2:#f0deb0;--gold3:#a6844a;
+  --text:#efe9dd;--sub:#a59f92;--mute:#6f6a61;
+  --up:#e2675c;--down:#4fb38c;
+  --num:"Didot","Bodoni 72","Bodoni MT","Playfair Display","Noto Serif Display","Noto Serif",Georgia,serif;
+  --serif:"Songti TC","STSong","Noto Serif CJK TC","Noto Serif TC",serif;
+  --sans:-apple-system,"PingFang TC","Noto Sans CJK TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --r:22px;--ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
+body{min-height:100vh;overscroll-behavior-y:none}
+body.locked{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0;text-align:inherit}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(120% 70% at 50% -10%,#1d1a14 0%,#0e0f12 45%,#0a0b0d 100%)}
+.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
+.o1{width:340px;height:340px;top:-120px;right:-120px;background:radial-gradient(circle,#6b5426 0%,transparent 70%);animation:drift 18s ease-in-out infinite alternate}
+.o2{width:300px;height:300px;bottom:10%;left:-160px;background:radial-gradient(circle,#2b2a3a 0%,transparent 70%);animation:drift 22s ease-in-out infinite alternate-reverse}
+.grain{position:absolute;inset:0;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@keyframes drift{to{transform:translate(-40px,60px) scale(1.15)}}
+#app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 108px)}
+.view{animation:rise .5s var(--ease) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.stagger>*{animation:rise .55s var(--ease) both}
+.stagger>*:nth-child(2){animation-delay:.05s}.stagger>*:nth-child(3){animation-delay:.1s}.stagger>*:nth-child(4){animation-delay:.15s}.stagger>*:nth-child(5){animation-delay:.2s}.stagger>*:nth-child(6){animation-delay:.25s}.stagger>*:nth-child(n+7){animation-delay:.3s}
+.stagger>.fab{animation:none}
+
+/* 頁首 */
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 18px}
+.top-r{display:flex;gap:8px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(145deg,#1b1c22,#0f1014);border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.brand b{font-family:var(--serif);font-size:21px;letter-spacing:.18em;font-weight:600;background:linear-gradient(180deg,var(--gold2),var(--gold) 60%,var(--gold3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{display:block;font-size:10px;letter-spacing:.32em;color:var(--mute);margin-top:2px}
+.iconbtn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line2);transition:.25s var(--ease)}
+.iconbtn:active{transform:scale(.92)}
+.iconbtn svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.6}
+
+/* 卡片 */
+.card{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.018));border:1px solid var(--line2);border-radius:var(--r);padding:18px;margin-bottom:14px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 18px 40px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05)}
+.hero{overflow:hidden;padding:22px 20px 18px;background:linear-gradient(150deg,#2a2418 0%,#16140f 42%,#0f1013 100%);border:1px solid rgba(214,186,130,.28)}
+.hero::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;background:linear-gradient(135deg,rgba(240,222,176,.55),transparent 35%,transparent 65%,rgba(214,185,127,.35));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.hero::after{content:"";position:absolute;top:-60%;left:-30%;width:60%;height:220%;background:linear-gradient(100deg,transparent,rgba(255,240,200,.07),transparent);transform:rotate(18deg);animation:sheen 7s ease-in-out infinite;pointer-events:none}
+@keyframes sheen{0%,60%{left:-60%}100%{left:130%}}
+.hero .ring{position:absolute;right:-50px;top:-50px;width:200px;height:200px;opacity:.5;pointer-events:none}
+.label{font-size:11.5px;letter-spacing:.2em;color:var(--sub);position:relative}
+.big{position:relative;font-family:var(--num);font-size:40px;line-height:1.1;font-weight:500;letter-spacing:.01em;margin:8px 0 4px;background:linear-gradient(180deg,#fff7e3,var(--gold2) 45%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;word-break:break-all}
+.big .cur{font-size:22px;margin-right:4px;vertical-align:6px}
+.big .unit{font-family:var(--serif);font-size:15px;margin-left:6px;letter-spacing:.12em;vertical-align:4px}
+.n{font-family:var(--num);font-variant-numeric:lining-nums tabular-nums}
+.hero-sub{position:relative;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--sub);font-size:12.5px}
+.hero-sub b{font-weight:600;color:var(--text)}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;background:rgba(214,185,127,.12);color:var(--gold2);border:1px solid rgba(214,185,127,.25);font-size:12px}
+.pill b{color:var(--gold2)!important}
+.prog{position:relative;height:3px;border-radius:3px;background:rgba(255,255,255,.07);margin:14px 0 0;overflow:hidden}
+.prog i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold3),var(--gold2));box-shadow:0 0 10px rgba(240,222,176,.45);transition:width 1s var(--ease)}
+.grid3{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(214,186,130,.14)}
+.prog+.grid3{margin-top:14px}
+.grid3 .v{font-family:var(--num);font-size:18px;margin-top:5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid3 .v small{font-family:var(--serif);font-size:12px;color:var(--sub)}
+.grid3 .v .cj{font-family:var(--serif);font-size:16px}
+.kv .k{font-size:11px;color:var(--mute);letter-spacing:.08em}
+.up{color:var(--up)!important}.down{color:var(--down)!important}.gold{color:var(--gold2)!important}
+.sect{display:flex;align-items:baseline;justify-content:space-between;margin:24px 4px 12px}
+.sect h3{margin:0;font-family:var(--serif);font-weight:600;font-size:17px;letter-spacing:.12em}
+.sect h3::before{content:"";display:inline-block;width:3px;height:13px;margin-right:9px;border-radius:2px;background:linear-gradient(var(--gold2),var(--gold3));vertical-align:-1px}
+.sect .more{font-size:12px;color:var(--gold);display:inline-flex;align-items:center;gap:4px;letter-spacing:.06em}
+.chev-s{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* 分頁籤 */
+.seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line2);margin-bottom:14px}
+.seg button{flex:1;padding:9px 0;border-radius:10px;color:var(--sub);font-size:13.5px;letter-spacing:.12em;transition:.3s var(--ease);text-align:center}
+.seg button.on{background:linear-gradient(160deg,#2a2519,#1a1813);color:var(--gold2);box-shadow:inset 0 0 0 1px rgba(214,186,130,.3),0 6px 16px -8px rgba(0,0,0,.8)}
+.seg sup{font-family:var(--num);font-size:10px;margin-left:3px;color:var(--mute)}
+
+/* 房源卡片 */
+.hold{padding:16px 16px 14px;cursor:pointer;transition:transform .3s var(--ease),border-color .3s}
+.hold:active{transform:scale(.985);border-color:var(--line)}
+.hold:hover{border-color:var(--line)}
+.hold .head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.hold .hl{display:flex;gap:11px;align-items:flex-start;min-width:0}
+.hold .head>div:first-child{min-width:0}
+.hold .nm{font-size:16px;font-weight:600;letter-spacing:.04em}
+.hold .cd{font-size:12px;color:var(--mute);margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mono{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;font-family:var(--num);font-size:18px;color:var(--gold2);background:linear-gradient(150deg,rgba(214,185,127,.16),rgba(214,185,127,.04));border:1px solid rgba(214,185,127,.25)}
+.tag{font-family:var(--sans);font-size:10px;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--gold);letter-spacing:.08em;white-space:nowrap;font-weight:400;vertical-align:1px}
+.tag.st-paid{border-color:rgba(214,185,127,.45);color:var(--gold2);background:rgba(214,185,127,.1)}
+.tag.st-partial{border-color:rgba(230,170,90,.45);color:#efc27e;background:rgba(230,170,90,.08)}
+.tag.st-overdue{border-color:rgba(226,103,92,.45);color:#f0a097;background:rgba(226,103,92,.08)}
+.tag.st-unpaid{border-color:rgba(255,255,255,.16);color:var(--sub)}
+.tag.st-nolog{border-style:dashed;border-color:rgba(255,255,255,.18);color:var(--mute)}
+.tag.st-vacant,.tag.st-future{border-color:rgba(255,255,255,.1);color:var(--mute)}
+.hold .price{text-align:right;flex:none}
+.hold .price .p{font-family:var(--num);font-size:19px}
+.hold .price .c{font-size:11.5px;margin-top:3px;color:var(--mute)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 12px;padding:12px 4px;border-radius:14px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.04)}
+.metrics .m{text-align:center;min-width:0}
+.metrics .m .k{font-size:10.5px;color:var(--mute);letter-spacing:.06em}
+.metrics .m .v{font-family:var(--num);font-size:16px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metrics .m .v.sm{font-family:var(--sans);font-size:12.5px;margin-top:6px;color:var(--sub)}
+.metrics .m .v.gold{color:var(--gold2)}
+.hold .foot{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--sub)}
+.hold .foot b{font-family:var(--num);font-weight:500;color:var(--text);margin-left:4px;font-size:13px}
+
+.empty{text-align:center;padding:38px 18px;color:var(--sub)}
+.empty .empty-ic{width:56px;height:56px;stroke:var(--gold3);fill:none;stroke-width:1.2;margin-bottom:10px}
+.empty .et{font-family:var(--serif);font-size:18px;letter-spacing:.14em;color:var(--text)}
+.empty p{margin:8px 0 20px;line-height:1.8}
+.btn-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.btn-row .btn{flex:1 1 auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 22px;border-radius:14px;font-size:14px;letter-spacing:.14em;font-weight:600;background:var(--glass);color:var(--gold2);border:1px solid var(--line);transition:.25s var(--ease);text-align:center}
+.btn:active{transform:scale(.96)}
+.btn.primary{background:linear-gradient(160deg,var(--gold2),var(--gold) 50%,var(--gold3));color:#1a150c;border:0;box-shadow:0 10px 24px -10px rgba(214,185,127,.6),inset 0 1px 0 rgba(255,255,255,.5)}
+.btn.ghost{background:var(--glass);color:var(--gold2);border:1px solid var(--line);box-shadow:none}
+.btn.danger{background:rgba(226,103,92,.12);color:#f0a097;border:1px solid rgba(226,103,92,.3);box-shadow:none}
+.btn.sm{padding:8px 14px;font-size:12.5px;border-radius:11px}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.fab{position:fixed;z-index:20;right:max(18px,calc(50% - 222px));bottom:calc(env(safe-area-inset-bottom) + 96px);width:56px;height:56px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(150deg,var(--gold2),var(--gold) 55%,var(--gold3));box-shadow:0 14px 30px -10px rgba(214,185,127,.7),inset 0 1px 0 rgba(255,255,255,.55);transition:.3s var(--ease)}
+.fab:active{transform:scale(.9) rotate(90deg)}
+.fab svg{width:24px;height:24px;stroke:#1a150c;stroke-width:2.2;fill:none}
+.note{font-size:11.5px;color:var(--mute);line-height:1.7;margin:14px 0 0}
+.muted{color:var(--sub);font-size:13px}
+.dim{color:var(--mute)}
+
+/* 清單列 */
+.list{padding-top:4px;padding-bottom:4px}
+.row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid var(--line2);transition:opacity .2s}
+.row:last-child{border-bottom:0}
+button.row:active{opacity:.7}
+.row .l{display:flex;gap:12px;align-items:center;min-width:0}
+.row .l>div:last-child{min-width:0}
+.row .ic{width:36px;height:36px;flex:none;border-radius:11px;display:grid;place-items:center;background:rgba(214,185,127,.08);border:1px solid rgba(214,185,127,.16);color:var(--gold)}
+.row .ic svg{width:17px;height:17px;stroke:var(--gold);fill:none;stroke-width:1.6}
+.row .ic.red{background:rgba(226,103,92,.08);border-color:rgba(226,103,92,.25)}
+.row .ic.red svg{stroke:#f0a097}
+.row .ic.mo{font-size:15px;color:var(--gold2)}
+.row .ic.mo small{font-family:var(--serif);font-size:9px;margin-left:1px;color:var(--sub)}
+.row .ic.cat{font-family:var(--serif);font-size:14px;color:var(--gold2)}
+.row .t{font-size:14px;line-height:1.45}
+.row .s{font-size:11.5px;color:var(--mute);margin-top:2px;line-height:1.5}
+.row .r{font-family:var(--num);font-size:15px;text-align:right;flex:none}
+.row .r small{display:block;font-family:var(--sans);font-size:10.5px;color:var(--mute);margin-top:2px}
+.chev{width:14px;height:14px;stroke:var(--mute);fill:none;stroke-width:2;flex:none}
+
+/* 年度切換 */
+.calhead{display:flex;align-items:center;justify-content:space-between}
+.card.slim{padding:10px 12px}
+.calhead .ym{font-family:var(--num);font-size:24px;letter-spacing:.04em}
+.calhead .ym small{font-family:var(--serif);font-size:13px;color:var(--sub);margin-left:4px}
+
+/* 年度格子 */
+.gridcard{padding:14px 0 14px 14px}
+.grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-right:14px;scrollbar-width:thin;scrollbar-color:rgba(214,185,127,.3) transparent}
+.month-grid{border-collapse:separate;border-spacing:5px;margin:-5px}
+.month-grid th{font-weight:400;font-size:10.5px;color:var(--mute);letter-spacing:.06em;padding:2px 0 4px;text-align:center}
+.month-grid .sticky{position:sticky;left:0;z-index:2;text-align:left;min-width:92px;max-width:104px;background:linear-gradient(90deg,#16161a 80%,rgba(22,22,26,0));padding-right:10px}
+.month-grid td.sticky{vertical-align:middle}
+.gn{font-size:12.5px;line-height:1.35;color:var(--text)}
+.gc{font-size:10px;color:var(--mute);letter-spacing:.1em;margin-top:2px}
+.cell{width:62px;min-height:62px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 2px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.05);transition:.2s var(--ease)}
+.cell:active{transform:scale(.94)}
+.cell .chip{font-size:10px;letter-spacing:.08em;color:var(--mute)}
+.cell .amt{font-size:12.5px;color:var(--text)}
+.cell .dt{font-size:10px;color:var(--mute)}
+.cell.paid{background:linear-gradient(160deg,rgba(214,185,127,.2),rgba(214,185,127,.06));border-color:rgba(214,185,127,.35)}
+.cell.paid .chip{color:var(--gold2)}.cell.paid .amt{color:var(--gold2)}
+.cell.partial{background:linear-gradient(160deg,rgba(230,170,90,.14),rgba(230,170,90,.03));border-color:rgba(230,170,90,.35)}
+.cell.partial .chip{color:#efc27e}
+.cell.overdue{background:rgba(226,103,92,.09);border-color:rgba(226,103,92,.35)}
+.cell.overdue .chip,.cell.overdue .amt{color:#f0a097}
+.cell.unpaid{border-color:rgba(255,255,255,.14)}
+.cell.unpaid .chip{color:var(--sub)}
+.cell.nolog{border-style:dashed;border-color:rgba(255,255,255,.12)}
+.cell.vacant,.cell.future{opacity:.5}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:11.5px;color:var(--sub);margin:14px 14px 0 0;padding-top:12px;border-top:1px solid var(--line2)}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:3px;flex:none;display:inline-block}
+.dot.paid{background:linear-gradient(150deg,var(--gold2),var(--gold3))}
+.dot.partial{background:#c99a55}
+.dot.unpaid{border:1px solid rgba(255,255,255,.3)}
+.dot.overdue{background:var(--up)}
+.dot.nolog{border:1px dashed rgba(255,255,255,.3)}
+.dot.vacant{background:#34322e}
+
+/* 圖表與表格 */
+.chart-box{width:100%}
+.chart-box canvas{width:100%;height:200px;display:block}
+table.tb{width:100%;border-collapse:collapse;font-size:12.5px}
+.tb th{font-weight:500;color:var(--mute);font-size:11px;letter-spacing:.08em;text-align:right;padding:4px 4px 8px;border-bottom:1px solid var(--line)}
+.tb th:first-child,.tb td:first-child{text-align:left;font-family:var(--sans);font-size:13px}
+.tb td{text-align:right;padding:9px 4px;border-bottom:1px solid var(--line2);font-family:var(--num);font-size:13.5px}
+.tb tr:last-child td{border-bottom:0}
+.tb tr.hl td{color:var(--gold2);border-top:1px solid var(--line)}
+.disclaimer{font-size:11px;line-height:1.75;color:var(--mute);padding:14px 16px;border-radius:16px;border:1px dashed rgba(214,186,130,.18);margin:6px 0 10px}
+.disclaimer b{color:var(--sub);font-weight:600;letter-spacing:.12em}
+.src{font-size:10.5px;color:var(--mute);text-align:center;margin:4px 0 14px;letter-spacing:.06em}
+
+/* 底部分頁 */
+.tabbar{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 12px);width:calc(100% - 28px);max-width:452px;display:flex;justify-content:space-around;padding:8px 4px;border-radius:24px;background:rgba(20,20,24,.72);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border:1px solid rgba(214,186,130,.16);box-shadow:0 20px 40px -12px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.06)}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;color:var(--mute);font-size:11px;letter-spacing:.12em;transition:.3s var(--ease);position:relative}
+.tabbar svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;transition:.3s var(--ease)}
+.tabbar button.on{color:var(--gold2)}
+.tabbar button.on svg{transform:translateY(-1px);filter:drop-shadow(0 0 6px rgba(214,185,127,.5))}
+.tabbar button.on::after{content:"";position:absolute;bottom:-3px;width:4px;height:4px;border-radius:50%;background:var(--gold)}
+
+/* 抽屜表單 */
+.overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(4,4,6,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:fade .3s both}
+@keyframes fade{from{opacity:0}}
+.modal{width:100%;max-width:480px;max-height:90vh;overflow-y:auto;background:linear-gradient(180deg,#1a1a1f,#111216);border:1px solid var(--line);border-bottom:0;border-radius:28px 28px 0 0;padding:10px 20px calc(env(safe-area-inset-bottom) + 24px);animation:sheetUp .45s var(--ease) both;box-shadow:0 -20px 60px -20px rgba(0,0,0,.8)}
+@keyframes sheetUp{from{transform:translateY(105%)}}
+.modal-handle{width:42px;height:4px;border-radius:4px;background:rgba(255,255,255,.18);margin:4px auto 16px}
+.modal h3{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:.14em;margin:0 0 12px}
+.modal p{color:var(--sub);line-height:1.7;margin:0 0 6px}
+.modal .note{color:var(--mute);font-size:12px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.field{margin-bottom:14px;min-width:0}
+.field.span2{grid-column:1/-1}
+.field label{display:block;font-size:12px;color:var(--sub);letter-spacing:.1em;margin-bottom:7px}
+.field input:not([type=checkbox]),.field select,.field textarea{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line2);background:rgba(0,0,0,.3);outline:0;font-size:15px;transition:.25s;color:var(--text);-webkit-appearance:none;appearance:none;min-height:48px}
+.field input[type=number]{font-family:var(--num);font-size:17px}
+.field input[type=date]{font-family:var(--num);font-size:15px;color-scheme:dark}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d6b97f' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:16px;padding-right:38px}
+.field select option{background:#16161a;color:var(--text)}
+.field textarea{min-height:76px;resize:vertical;line-height:1.6}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold3);box-shadow:0 0 0 3px rgba(214,185,127,.12)}
+.field input::placeholder,.field textarea::placeholder{color:var(--mute)}
+.field label.check{display:inline-flex;margin-bottom:0;letter-spacing:.04em}
+.check{display:inline-flex;align-items:center;gap:8px;margin:12px 16px 6px 0;font-size:14px;color:var(--text);cursor:pointer}
+.check input{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:7px;border:1px solid var(--line);background:rgba(0,0,0,.3);display:grid;place-items:center;margin:0;transition:.2s}
+.check input:checked{background:linear-gradient(150deg,var(--gold2),var(--gold3));border:0}
+.check input:checked::after{content:"";width:9px;height:5px;border-left:2px solid #1a150c;border-bottom:2px solid #1a150c;transform:rotate(-45deg) translate(1px,-1px)}
+hr.sep{border:0;height:1px;background:var(--line);margin:6px 0 18px}
+.modal h3[style]{margin-bottom:12px}
+.quick-row{padding:14px;border-radius:16px;background:linear-gradient(150deg,rgba(214,185,127,.08),rgba(214,185,127,.015));border:1px solid var(--line);margin-bottom:12px}
+.quick-row .form-grid{margin-top:10px!important}
+.quick-row .field{margin-bottom:10px}
+.badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--gold);letter-spacing:.08em;vertical-align:2px}
+.badge.vacant{border-color:rgba(255,255,255,.12);color:var(--mute)}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 16px);transform:translate(-50%,-140%);z-index:80;padding:11px 18px;border-radius:14px;background:rgba(30,28,24,.92);border:1px solid var(--line);color:var(--gold2);font-size:13px;transition:.4s var(--ease);backdrop-filter:blur(10px);opacity:0;white-space:nowrap}
+.toast.show{transform:translate(-50%,0);opacity:1}
+@media(min-width:700px){
+  .overlay{align-items:center}
+  .modal{border-radius:28px;border-bottom:1px solid var(--line);max-height:86vh}
+  @keyframes sheetUp{from{transform:translateY(30px);opacity:0}}
+}
+@media(max-width:360px){.big{font-size:34px}.grid3 .v{font-size:16px}.metrics .m .v{font-size:14px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="grain"></i></div>
+<main id="app"></main>
+<nav class="tabbar" id="tabbar" aria-label="主要選單"></nav>
+<div id="overlayHost"></div>
+<div class="toast" id="toast"></div>
+<script>
+(function () {
+  "use strict";
+
+  var STORE_KEY = "landlord-rent-ledger-v1";
+  var METHODS = ["轉帳", "現金", "微信", "支付寶", "其他"];
+  var EXPENSE_CATS = ["修繕", "物業管理費", "水電", "稅費", "仲介費", "其他"];
+  var MONTH_LAB = ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"];
+  var VIEWS = [
+    { id: "home", label: "總覽", icon: "home" },
+    { id: "props", label: "房源", icon: "building" },
+    { id: "rent", label: "收租", icon: "grid" },
+    { id: "exp", label: "支出", icon: "out" },
+    { id: "rep", label: "報表", icon: "chart" },
+    { id: "bak", label: "備份", icon: "save" }
+  ];
+
+  var state = { properties: [], payments: [], expenses: [] };
+  var view = "home";
+  var rentYear = new Date().getFullYear();
+  var reportYear = new Date().getFullYear();
+  var toastTimer = null;
+
+  function uid() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+    return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function pad(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  function parseISO(s) {
+    if (!s) return null;
+    var p = String(s).split("-");
+    if (p.length < 3) return null;
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function daysInMonth(y, m) {
+    return new Date(y, m, 0).getDate();
+  }
+
+  function dueISO(y, m, dueDay) {
+    var last = daysInMonth(y, m);
+    var day = Math.min(Math.max(1, Number(dueDay) || 1), last);
+    return y + "-" + pad(m) + "-" + pad(day);
+  }
+
+  function fmtDate(s) {
+    var d = parseISO(s);
+    if (!d) return "—";
+    return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
+  }
+
+  function fmtShort(s) {
+    var d = parseISO(s);
+    if (!d) return "";
+    return pad(d.getMonth() + 1) + "/" + pad(d.getDate());
+  }
+
+  function fmtNum(n) {
+    var x = Number(n);
+    if (!isFinite(x)) x = 0;
+    return x.toLocaleString("zh-Hant", { maximumFractionDigits: 2, minimumFractionDigits: x % 1 === 0 ? 0 : 2 });
+  }
+
+  function curLabel(c) {
+    return c === "TWD" ? "台幣" : "人民幣";
+  }
+
+  function curSym(c) {
+    return c === "TWD" ? "NT$" : "￥";
+  }
+
+  function fmtMoney(n, c) {
+    return curSym(c) + fmtNum(n);
+  }
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) {
+        state = { properties: [], payments: [], expenses: [] };
+        return;
+      }
+      var data = JSON.parse(raw);
+      state = normalize(data);
+    } catch (e) {
+      state = { properties: [], payments: [], expenses: [] };
+    }
+  }
+
+  function normalize(data) {
+    data = data && typeof data === "object" ? data : {};
+    return {
+      properties: Array.isArray(data.properties) ? data.properties.map(normProp) : [],
+      payments: Array.isArray(data.payments) ? data.payments.map(normPay) : [],
+      expenses: Array.isArray(data.expenses) ? data.expenses.map(normExp) : []
+    };
+  }
+
+  function num(v, d) {
+    var n = Number(v);
+    return isFinite(n) ? n : (d || 0);
+  }
+
+  function normProp(p) {
+    p = p || {};
+    return {
+      id: p.id || uid(),
+      name: String(p.name || ""),
+      address: String(p.address || ""),
+      currency: p.currency === "TWD" ? "TWD" : "CNY",
+      monthlyRent: num(p.monthlyRent, 0),
+      dueDay: Math.min(31, Math.max(1, num(p.dueDay, 1))),
+      deposit: num(p.deposit, 0),
+      status: p.status === "vacant" ? "vacant" : "rented",
+      tenantName: String(p.tenantName || ""),
+      tenantPhone: String(p.tenantPhone || ""),
+      leaseStart: String(p.leaseStart || ""),
+      leaseEnd: String(p.leaseEnd || ""),
+      depositReceived: !!p.depositReceived,
+      depositReturned: !!p.depositReturned
+    };
+  }
+
+  function normPay(p) {
+    p = p || {};
+    return {
+      id: p.id || uid(),
+      propertyId: String(p.propertyId || ""),
+      year: num(p.year, 0),
+      month: num(p.month, 0),
+      expected: num(p.expected, 0),
+      actual: num(p.actual, 0),
+      date: String(p.date || ""),
+      method: METHODS.indexOf(p.method) >= 0 ? p.method : "轉帳",
+      note: String(p.note || "")
+    };
+  }
+
+  function normExp(e) {
+    e = e || {};
+    return {
+      id: e.id || uid(),
+      propertyId: String(e.propertyId || ""),
+      category: EXPENSE_CATS.indexOf(e.category) >= 0 ? e.category : "其他",
+      date: String(e.date || ""),
+      amount: num(e.amount, 0),
+      note: String(e.note || "")
+    };
+  }
+
+  function save() {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      version: 1,
+      savedAt: todayISO(),
+      properties: state.properties,
+      payments: state.payments,
+      expenses: state.expenses
+    }));
+  }
+
+  function propById(id) {
+    for (var i = 0; i < state.properties.length; i++) {
+      if (state.properties[i].id === id) return state.properties[i];
+    }
+    return null;
+  }
+
+  function paymentFor(pid, y, m) {
+    for (var i = 0; i < state.payments.length; i++) {
+      var p = state.payments[i];
+      if (p.propertyId === pid && p.year === y && p.month === m) return p;
+    }
+    return null;
+  }
+
+  function leasePhase(prop, y, m) {
+    var start = parseISO(prop.leaseStart);
+    var end = parseISO(prop.leaseEnd);
+    var ms = new Date(y, m - 1, 1);
+    var me = new Date(y, m, 0);
+    if (start && me < start) return "before";
+    if (end && ms > end) return "after";
+    if (start || end) return "during";
+    return "unknown";
+  }
+
+  function monthStatus(prop, y, m) {
+    var pay = paymentFor(prop.id, y, m);
+    var phase = leasePhase(prop, y, m);
+    var expected = pay ? pay.expected : (prop.status === "vacant" || phase === "before" || phase === "after" ? 0 : num(prop.monthlyRent, 0));
+    var actual = pay ? pay.actual : 0;
+    var now = new Date();
+    var cy = now.getFullYear();
+    var cm = now.getMonth() + 1;
+    var isFuture = y > cy || (y === cy && m > cm);
+    var isPast = y < cy || (y === cy && m < cm);
+    var isCurrent = y === cy && m === cm;
+    if (isFuture && actual === 0 && !pay) {
+      return { key: "future", label: "未到", expected: expected, actual: 0, pay: null };
+    }
+    if (prop.status === "vacant" && actual === 0 && !pay) {
+      return { key: "vacant", label: "空置", expected: 0, actual: 0, pay: null };
+    }
+    if (phase === "before" && actual === 0 && !pay) {
+      return { key: "future", label: "未起租", expected: 0, actual: 0, pay: null };
+    }
+    if (phase === "after" && actual === 0 && !pay) {
+      return { key: "vacant", label: "已到期", expected: 0, actual: 0, pay: null };
+    }
+    if (actual > 0 && expected > 0 && actual + 0.0001 >= expected) {
+      return { key: "paid", label: "已收", expected: expected, actual: actual, pay: pay };
+    }
+    if (actual > 0 && actual < expected) {
+      return { key: "partial", label: "部分", expected: expected, actual: actual, pay: pay };
+    }
+    if (actual > 0 && expected <= 0) {
+      return { key: "paid", label: "已收", expected: expected, actual: actual, pay: pay };
+    }
+    if (phase === "unknown" && !pay && isPast) {
+      return { key: "nolog", label: "未登記", expected: expected, actual: 0, pay: null };
+    }
+    var due = dueISO(y, m, prop.dueDay);
+    if ((isPast || (isCurrent && todayISO() > due)) && expected > 0) {
+      return { key: "overdue", label: "逾期", expected: expected, actual: actual, pay: pay };
+    }
+    return { key: "unpaid", label: "未收", expected: expected, actual: actual, pay: pay };
+  }
+
+  function arrears() {
+    var now = new Date();
+    var cy = now.getFullYear();
+    var cm = now.getMonth() + 1;
+    var list = [];
+    state.properties.forEach(function (p) {
+      if (p.status !== "rented") return;
+      var startY = cy;
+      var startM = 1;
+      if (p.leaseStart) {
+        var ls = parseISO(p.leaseStart);
+        if (ls) {
+          startY = ls.getFullYear();
+          startM = ls.getMonth() + 1;
+        }
+      } else {
+        startY = cy;
+        startM = cm;
+      }
+      var earliestY = cy - 2, earliestM = cm;
+      if (startY < earliestY || (startY === earliestY && startM < earliestM)) {
+        startY = earliestY;
+        startM = earliestM;
+      }
+      var y = startY, m = startM;
+      var guard = 0;
+      while (guard++ < 36 && (y < cy || (y === cy && m <= cm))) {
+        var st = monthStatus(p, y, m);
+        if (st.key === "overdue" || st.key === "partial" || st.key === "unpaid") {
+          list.push({ prop: p, year: y, month: m, st: st });
+        }
+        m++;
+        if (m > 12) { m = 1; y++; }
+      }
+    });
+    list.sort(function (a, b) {
+      if (a.st.key === "overdue" && b.st.key !== "overdue") return -1;
+      if (a.st.key !== "overdue" && b.st.key === "overdue") return 1;
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
+    return list;
+  }
+
+  function leaseAlerts() {
+    var soon = [];
+    var expired = [];
+    var today = todayISO();
+    state.properties.forEach(function (p) {
+      if (!p.leaseEnd || p.status !== "rented") return;
+      var end = parseISO(p.leaseEnd);
+      if (!end) return;
+      var t = parseISO(today);
+      var diff = Math.round((end.getTime() - t.getTime()) / 86400000);
+      if (diff < 0) expired.push({ prop: p, days: -diff });
+      else if (diff <= 60) soon.push({ prop: p, days: diff });
+    });
+    soon.sort(function (a, b) { return a.days - b.days; });
+    expired.sort(function (a, b) { return b.days - a.days; });
+    return { soon: soon, expired: expired };
+  }
+
+  function monthTotals(y, m, cur) {
+    var expected = 0, actual = 0, n = 0;
+    state.properties.forEach(function (p) {
+      if (p.currency !== cur) return;
+      if (p.status !== "rented" && !paymentFor(p.id, y, m)) return;
+      var st = monthStatus(p, y, m);
+      if (st.key === "vacant" || st.key === "future" || st.key === "nolog") return;
+      expected += st.expected;
+      actual += st.actual;
+      n++;
+    });
+    return { expected: expected, actual: actual, n: n };
+  }
+
+  function depositsHeld(cur) {
+    var t = 0, n = 0;
+    state.properties.forEach(function (p) {
+      if (p.currency !== cur) return;
+      if (p.depositReceived && !p.depositReturned) {
+        t += num(p.deposit, 0);
+        n++;
+      }
+    });
+    return { total: t, n: n };
+  }
+
+  function usedCurrencies() {
+    var has = { CNY: false, TWD: false };
+    state.properties.forEach(function (p) { has[p.currency] = true; });
+    var arr = [];
+    if (has.CNY) arr.push("CNY");
+    if (has.TWD) arr.push("TWD");
+    if (!arr.length) arr.push("CNY");
+    return arr;
+  }
+
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+
+  var homeCur = null;
+
+  var ICONS = {
+    home: '<path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5.5h4V20"/>',
+    building: '<path d="M5 20.5V5.5a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 15 5.5v15"/><path d="M15 9.5h3a1.5 1.5 0 0 1 1.5 1.5v9.5"/><path d="M3.5 20.5h17"/><path d="M8.5 8h3M8.5 11.5h3M8.5 15h3"/>',
+    grid: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/><path d="m9 15 2 2 4-4"/>',
+    out: '<path d="M6 3.5h12v17l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 8.5h6M9 12h6M9 15.5h3.5"/>',
+    chart: '<path d="M4 20h16"/><path d="M6.5 16.5v-4M11 16.5V8.5M15.5 16.5v-6M20 4.5l-4.5 3.5-4-2.5L5 9.5"/>',
+    save: '<ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    chevL: '<path d="m15 5-7 7 7 7"/>',
+    chevR: '<path d="m9 5 7 7-7 7"/>',
+    down: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+    up: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',
+    sheet: '<rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M4 9h16M4 14.5h16M10 9v11.5"/>',
+    sample: '<path d="M9 3h6M10 3v5.5L5 18a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9.5V3"/><path d="M7.5 14h9"/>',
+    trash: '<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/>',
+    bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+    doc: '<path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M9.5 12h6M9.5 15.5h6"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 8.5-8.5M16 7l2.5 2.5M14 9l2 2"/>',
+    shield: '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.2 7.5 9.5 4.3-1.3 7.5-4.9 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.5 10"/>'
+  };
+
+  function icon(name, cls) {
+    return '<svg viewBox="0 0 24 24"' + (cls ? ' class="' + cls + '"' : "") + ' stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || "") + "</svg>";
+  }
+
+  var HEAD = {
+    home: ["收租帳本", "租金 · 入帳 · 經營"],
+    props: ["房源", "套房 · 租客 · 合約"],
+    rent: ["收租", "月份 · 入帳 · 紀錄"],
+    exp: ["支出", "修繕 · 物業 · 水電"],
+    rep: ["報表", "收入 · 支出 · 淨額"],
+    bak: ["備份", "匯出 · 匯入 · 範例"]
+  };
+
+  function logoMark() {
+    return '<svg viewBox="0 0 64 64" width="22" height="22"><defs><linearGradient id="lgMark" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#f1dfb2"/><stop offset="1" stop-color="#a8864a"/></linearGradient></defs>' +
+      '<circle cx="32" cy="32" r="20" fill="none" stroke="url(#lgMark)" stroke-width="3"/>' +
+      '<path d="M21 33 32 23.5 43 33M25.5 30v11h13V30M32 41v-6" stroke="url(#lgMark)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  function hdr(id, right) {
+    var h = HEAD[id] || HEAD.home;
+    return '<div class="top"><div class="brand"><div class="mark">' + logoMark() + "</div><div><b>" + h[0] + "</b><small>" + h[1] + "</small></div></div>" +
+      '<div class="top-r">' + (right || "") + "</div></div>";
+  }
+
+  function ringDeco() {
+    return '<svg class="ring" viewBox="0 0 200 200" aria-hidden="true"><defs><linearGradient id="rgDeco" x1="0" x2="1"><stop offset="0" stop-color="#f0deb0" stop-opacity=".5"/><stop offset="1" stop-color="#a6844a" stop-opacity="0"/></linearGradient></defs>' +
+      '<circle cx="100" cy="100" r="80" fill="none" stroke="url(#rgDeco)"/><circle cx="100" cy="100" r="60" fill="none" stroke="url(#rgDeco)"/><circle cx="100" cy="100" r="40" fill="none" stroke="url(#rgDeco)"/></svg>';
+  }
+
+  function bigMoney(n, cur, small) {
+    return '<div class="big n"><span class="cur">' + (cur === "TWD" ? "NT$" : "¥") + "</span>" + fmtNum(n) + (small ? '<span class="unit">' + small + "</span>" : "") + "</div>";
+  }
+
+  function kv(k, v, cls) {
+    return '<div class="kv"><div class="k">' + k + '</div><div class="v n' + (cls ? " " + cls : "") + '">' + v + "</div></div>";
+  }
+
+  function fab(act, label) {
+    return '<button type="button" class="fab" data-act="' + act + '" aria-label="' + label + '">' + icon("plus") + "</button>";
+  }
+
+  function renderNav() {
+    var host = document.getElementById("tabbar");
+    host.innerHTML = VIEWS.map(function (v) {
+      return '<button type="button" class="' + (view === v.id ? "on" : "") + '" data-go="' + v.id + '">' +
+        icon(v.icon) + "<span>" + v.label + "</span></button>";
+    }).join("");
+  }
+
+  function sectionTitle(title, sub) {
+    return '<div class="sect"><h3>' + title + "</h3>" + (sub ? '<span class="more">' + sub + "</span>" : "") + "</div>";
+  }
+
+  function initialOf(name) {
+    var s = String(name || "").replace(/【範例】/g, "").trim();
+    var letter = s.match(/[A-Za-z](?=棟|座|房|戶|单元|單元)/) || s.match(/[A-Za-z]/);
+    if (letter) return letter[0].toUpperCase();
+    return s ? s.charAt(0) : "寓";
+  }
+
+  function emptyArt() {
+    return '<svg class="empty-ic" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5.5h4V20"/></svg>';
+  }
+
+  function emptyCard(title, text, buttons) {
+    return '<section class="card empty">' + emptyArt() + '<div class="et">' + title + "</div>" +
+      (text ? "<p>" + text + "</p>" : "") + (buttons || "") + "</section>";
+  }
+
+  function pctOf(a, b) {
+    return b > 0 ? Math.max(0, Math.min(1, a / b)) : 0;
+  }
+
+  function progLine(rate) {
+    return '<div class="prog"><i style="width:' + (rate * 100).toFixed(1) + '%"></i></div>';
+  }
+
+  function stTag(st) {
+    return '<span class="tag st-' + st.key + '">' + st.label + "</span>";
+  }
+
+  function go(id) {
+    view = id;
+    closeModal();
+    window.scrollTo(0, 0);
+    render();
+  }
+
+  function render() {
+    renderNav();
+    var app = document.getElementById("app");
+    var html = "";
+    if (view === "home") html = renderHome();
+    else if (view === "props") html = renderProps();
+    else if (view === "rent") html = renderRent();
+    else if (view === "exp") html = renderExp();
+    else if (view === "rep") html = renderRep();
+    else if (view === "bak") html = renderBak();
+    app.innerHTML = '<div class="view stagger">' + html + "</div>";
+    if (view === "rep") drawAllCharts();
+  }
+
+  function currenciesBlock(fn) {
+    return usedCurrencies().map(fn).join("");
+  }
+
+  function curSeg(list, cur, countFn) {
+    if (list.length < 2) return "";
+    return '<div class="seg">' + list.map(function (c) {
+      return '<button type="button" class="' + (c === cur ? "on" : "") + '" data-cur="' + c + '">' + curLabel(c) +
+        "<sup>" + countFn(c) + "</sup></button>";
+    }).join("") + "</div>";
+  }
+
+  function pickCur() {
+    var list = usedCurrencies();
+    if (list.indexOf(homeCur) < 0) homeCur = list[0];
+    return homeCur;
+  }
+
+  function homeRight() {
+    return '<button type="button" class="iconbtn" data-act="quick-pay" aria-label="登記本月收租">' + icon("check") + "</button>" +
+      '<button type="button" class="iconbtn" data-go="bak" aria-label="備份">' + icon("save") + "</button>";
+  }
+
+  function renderHome() {
+    var now = new Date();
+    var y = now.getFullYear(), m = now.getMonth() + 1;
+    if (!state.properties.length) {
+      return hdr("home", homeRight()) +
+        '<section class="card hero">' + ringDeco() +
+        '<div class="label">' + y + " 年 " + m + " 月實收</div>" + bigMoney(0, "CNY") +
+        '<div class="hero-sub"><span class="pill">收款率 <b class="n">0%</b></span><span>應收 <b class="n">¥0</b></span></div>' +
+        '<div class="grid3">' + kv("尚欠", "0") + kv("欠租", "0 筆") + kv("押金在手", "0") + "</div></section>" +
+        emptyCard("尚無房源", "先新增一間套房，再開始記下每個月的租金入帳。<br>資料只存在這部裝置的瀏覽器中，不會上傳。",
+          '<div class="btn-col"><button type="button" class="btn primary" data-act="new-prop">' + icon("plus") + "新增套房</button>" +
+          '<button type="button" class="btn ghost" data-act="load-demo">載入範例資料</button></div>' +
+          '<p class="note">範例資料僅供練習介面，可隨時清除，不會當成真實帳目。</p>') +
+        fab("new-prop", "新增套房");
+    }
+    var cur = pickCur();
+    var t = monthTotals(y, m, cur);
+    var gap = Math.max(0, t.expected - t.actual);
+    var rate = pctOf(t.actual, t.expected);
+    var arr = arrears();
+    var la = leaseAlerts();
+    var arrCur = arr.filter(function (a) { return a.prop.currency === cur; });
+    var dep = depositsHeld(cur);
+
+    var html = hdr("home", homeRight());
+    html += '<section class="card hero">' + ringDeco() +
+      '<div class="label">' + y + " 年 " + m + " 月實收（" + curLabel(cur) + "）</div>" +
+      bigMoney(t.actual, cur) +
+      '<div class="hero-sub"><span class="pill">收款率 <b class="n">' + Math.round(rate * 100) + '%</b></span>' +
+      "<span>應收 <b class=\"n\">" + fmtMoney(t.expected, cur) + "</b></span></div>" +
+      progLine(rate) +
+      '<div class="grid3">' +
+      kv("尚欠", fmtNum(gap), gap > 0 ? "up" : "") +
+      kv("欠租", arrCur.length + '<small> 筆</small>', arrCur.length ? "up" : "") +
+      kv("押金在手", fmtNum(dep.total)) +
+      "</div></section>";
+
+    html += curSeg(usedCurrencies(), cur, function (c) {
+      return state.properties.filter(function (p) { return p.currency === c; }).length;
+    });
+
+    html += '<div class="sect"><h3>本月各房</h3><button type="button" class="more" data-act="quick-pay">一次登記' + icon("chevR", "chev-s") + "</button></div>";
+    state.properties.filter(function (p) { return p.currency === cur; }).forEach(function (p) {
+      var st = monthStatus(p, y, m);
+      var lack = Math.max(0, st.expected - st.actual);
+      html += '<article class="card hold" data-pay="' + esc(p.id) + '" data-y="' + y + '" data-m="' + m + '">' +
+        '<div class="head"><div><div class="nm">' + esc(p.name) + '</div><div class="cd"><span>' + esc(p.address || "未填地址") + "</span>" + stTag(st) + "</div></div>" +
+        '<div class="price"><div class="p n">' + fmtMoney(p.monthlyRent, p.currency) + '</div><div class="c">每月 ' + p.dueDay + " 日收租</div></div></div>" +
+        '<div class="metrics">' +
+        '<div class="m"><div class="k">應收</div><div class="v n">' + fmtNum(st.expected) + "</div></div>" +
+        '<div class="m"><div class="k">實收</div><div class="v n gold">' + fmtNum(st.actual) + "</div></div>" +
+        '<div class="m"><div class="k">尚欠</div><div class="v n' + (lack > 0 && st.key !== "future" ? " up" : "") + '">' + fmtNum(lack) + "</div></div>" +
+        '<div class="m"><div class="k">入帳日</div><div class="v n">' + (st.pay && st.pay.date ? fmtShort(st.pay.date) : "—") + "</div></div>" +
+        "</div>" +
+        '<div class="foot"><span>租客<b>' + esc(p.tenantName || "未填") + "</b></span>" +
+        "<span>合約到期<b>" + (p.leaseEnd ? fmtShort(p.leaseEnd) : "—") + "</b></span>" +
+        "<span>" + (st.pay ? "付款<b>" + esc(st.pay.method) + "</b>" : "點此登記") + "</span></div>" +
+        "</article>";
+    });
+
+    html += sectionTitle("欠租提醒", arr.length ? arr.length + " 筆待處理" : "目前沒有");
+    html += '<section class="card list">';
+    if (!arr.length) {
+      html += '<div class="row"><div class="l"><div class="ic">' + icon("check") + '</div><div><div class="t">目前沒有待收或逾期的租金</div><div class="s">每月記得登記入帳</div></div></div></div>';
+    } else {
+      arr.forEach(function (a) {
+        var lack = Math.max(0, a.st.expected - a.st.actual);
+        html += '<button type="button" class="row" data-pay="' + esc(a.prop.id) + '" data-y="' + a.year + '" data-m="' + a.month + '">' +
+          '<div class="l"><div class="ic' + (a.st.key === "overdue" ? " red" : "") + '">' + icon("bell") + "</div><div>" +
+          '<div class="t">' + esc(a.prop.name) + " " + stTag(a.st) + "</div>" +
+          '<div class="s">' + a.year + "年" + a.month + "月 · 每月" + a.prop.dueDay + "日收租 · 已收 " + fmtMoney(a.st.actual, a.prop.currency) + "</div></div></div>" +
+          '<div class="r"><span class="up">' + fmtMoney(lack, a.prop.currency) + "</span><small>尚欠</small></div></button>";
+      });
+    }
+    html += "</section>";
+
+    html += sectionTitle("合約到期提醒", "六十日內");
+    html += '<section class="card list">';
+    if (!la.soon.length && !la.expired.length) {
+      html += '<div class="row"><div class="l"><div class="ic">' + icon("doc") + '</div><div><div class="t">六十日內沒有即將到期的合約</div><div class="s">到期前兩個月會出現在這裡</div></div></div></div>';
+    } else {
+      la.expired.forEach(function (x) {
+        html += '<button type="button" class="row" data-edit-prop="' + esc(x.prop.id) + '"><div class="l"><div class="ic red">' + icon("doc") + "</div><div>" +
+          '<div class="t">' + esc(x.prop.name) + ' <span class="tag st-overdue">已到期</span></div>' +
+          '<div class="s">租客 ' + esc(x.prop.tenantName || "未填") + " · " + fmtDate(x.prop.leaseEnd) + "到期</div></div></div>" +
+          '<div class="r"><span class="up">' + x.days + "</span><small>已過日數</small></div></button>";
+      });
+      la.soon.forEach(function (x) {
+        html += '<button type="button" class="row" data-edit-prop="' + esc(x.prop.id) + '"><div class="l"><div class="ic">' + icon("doc") + "</div><div>" +
+          '<div class="t">' + esc(x.prop.name) + ' <span class="tag st-partial">即將到期</span></div>' +
+          '<div class="s">租客 ' + esc(x.prop.tenantName || "未填") + " · " + fmtDate(x.prop.leaseEnd) + "到期</div></div></div>" +
+          '<div class="r"><span class="gold">' + x.days + "</span><small>剩餘日數</small></div></button>";
+      });
+    }
+    html += "</section>";
+
+    html += sectionTitle("押金在手", "已收未退");
+    html += '<section class="card list">' + currenciesBlock(function (c) {
+      var d = depositsHeld(c);
+      return '<div class="row"><div class="l"><div class="ic">' + icon("key") + '</div><div><div class="t">' + curLabel(c) + '</div><div class="s">' + d.n + " 間套房</div></div></div>" +
+        '<div class="r"><span class="gold">' + fmtMoney(d.total, c) + "</span></div></div>";
+    }) + '</section><p class="src">只統計「押金已收、尚未退還」的套房</p>';
+    html += fab("quick-pay", "登記本月收租");
+    return html;
+  }
+
+  function stat(k, v, cls) {
+    return kv(k, v, cls);
+  }
+
+  function renderProps() {
+    var html = hdr("props", '<button type="button" class="iconbtn" data-act="new-prop" aria-label="新增套房">' + icon("plus") + "</button>");
+    if (!state.properties.length) {
+      return html + emptyCard("還沒有套房", "把每間套房的名稱、租金、收租日和幣別建好，之後記帳會快很多。",
+        '<div class="btn-col"><button type="button" class="btn primary" data-act="new-prop">' + icon("plus") + "新增套房</button></div>") + fab("new-prop", "新增套房");
+    }
+    var rented = state.properties.filter(function (p) { return p.status === "rented"; }).length;
+    var la = leaseAlerts();
+    html += '<section class="card hero">' + ringDeco() +
+      '<div class="label">名下套房</div>' +
+      '<div class="big n">' + state.properties.length + '<span class="unit">間</span></div>' +
+      '<div class="hero-sub"><span class="pill">出租中 <b class="n">' + rented + '</b></span><span class="pill">空置 <b class="n">' + (state.properties.length - rented) + "</b></span></div>" +
+      '<div class="grid3">' + currenciesBlock(function (c) {
+        var sum = 0;
+        state.properties.forEach(function (p) { if (p.currency === c && p.status === "rented") sum += num(p.monthlyRent, 0); });
+        return kv(curLabel(c) + "月租", fmtNum(sum));
+      }) + kv("合約將到期", (la.soon.length + la.expired.length) + "<small> 件</small>", la.soon.length + la.expired.length ? "gold" : "") + "</div></section>";
+    html += sectionTitle("全部房源", "點卡片可編輯");
+    state.properties.forEach(function (p) {
+      var stTxt = p.status === "vacant" ? '<span class="tag st-vacant">空置</span>' : '<span class="tag st-paid">出租中</span>';
+      var depTxt = p.depositReceived ? (p.depositReturned ? "已退還" : "已收未退") : "尚未收取";
+      html += '<article class="card hold" data-edit-prop="' + esc(p.id) + '">' +
+        '<div class="head"><div class="hl"><div class="mono">' + esc(initialOf(p.name)) + '</div><div><div class="nm">' + esc(p.name) + "</div>" +
+        '<div class="cd"><span>' + esc(p.address || "未填地址") + "</span>" + stTxt + '<span class="tag">' + curLabel(p.currency) + "</span></div></div></div>" +
+        '<div class="price"><div class="p n">' + fmtMoney(p.monthlyRent, p.currency) + '</div><div class="c">月租</div></div></div>' +
+        '<div class="metrics">' +
+        '<div class="m"><div class="k">收租日</div><div class="v n">' + p.dueDay + "日</div></div>" +
+        '<div class="m"><div class="k">押金</div><div class="v n gold">' + fmtNum(p.deposit) + "</div></div>" +
+        '<div class="m"><div class="k">押金狀態</div><div class="v sm">' + depTxt + "</div></div>" +
+        '<div class="m"><div class="k">合約到期</div><div class="v n">' + (p.leaseEnd ? fmtShort(p.leaseEnd) : "—") + "</div></div>" +
+        "</div>" +
+        '<div class="foot"><span>租客<b>' + esc(p.tenantName || "未填") + "</b></span>" +
+        (p.tenantPhone ? "<span>電話<b>" + esc(p.tenantPhone) + "</b></span>" : "<span></span>") +
+        "<span>起租<b>" + (p.leaseStart ? fmtShort(p.leaseStart) : "—") + "</b></span></div></article>";
+    });
+    return html + fab("new-prop", "新增套房");
+  }
+
+  function yearSwitch(y, attr) {
+    return '<div class="calhead card slim"><button type="button" class="iconbtn" ' + attr + '="-1" aria-label="上一年">' + icon("chevL") + "</button>" +
+      '<div class="ym n">' + y + "<small>年</small></div>" +
+      '<button type="button" class="iconbtn" ' + attr + '="1" aria-label="下一年">' + icon("chevR") + "</button></div>";
+  }
+
+  function renderRent() {
+    var html = hdr("rent", '<button type="button" class="iconbtn" data-act="quick-pay" aria-label="登記本月收租">' + icon("check") + "</button>");
+    html += yearSwitch(rentYear, "data-year-delta");
+    if (!state.properties.length) {
+      return html + emptyCard("請先新增套房", "建好套房後，這裡會出現每月的收租格子。",
+        '<div class="btn-col"><button type="button" class="btn primary" data-act="new-prop">' + icon("plus") + "新增套房</button></div>");
+    }
+    html += sectionTitle(rentYear + " 年度格子", "可左右滑動");
+    html += '<section class="card gridcard"><div class="grid-wrap"><table class="month-grid"><thead><tr><th class="sticky">套房</th>';
+    MONTH_LAB.forEach(function (lab) { html += "<th>" + lab + "</th>"; });
+    html += "</tr></thead><tbody>";
+    state.properties.forEach(function (p) {
+      html += '<tr><td class="sticky"><div class="gn">' + esc(p.name.replace(/【範例】/g, "")) + '</div><div class="gc">' + curLabel(p.currency) + "</div></td>";
+      for (var m = 1; m <= 12; m++) {
+        var st = monthStatus(p, rentYear, m);
+        var extra = "";
+        if (st.actual > 0) extra += '<div class="amt n">' + fmtNum(st.actual) + "</div>";
+        else if (st.key === "overdue" || st.key === "unpaid") extra += '<div class="amt n">' + fmtNum(st.expected) + "</div>";
+        if (st.pay && st.pay.date) extra += '<div class="dt n">' + fmtShort(st.pay.date) + "</div>";
+        html += "<td><button type=\"button\" class=\"cell " + st.key + "\" data-pay=\"" + esc(p.id) +
+          "\" data-y=\"" + rentYear + "\" data-m=\"" + m + "\"><span class=\"chip\">" + st.label + "</span>" + extra + "</button></td>";
+      }
+      html += "</tr>";
+    });
+    html += "</tbody></table></div>";
+    html += '<div class="legend"><span><i class="dot paid"></i>已收</span><span><i class="dot partial"></i>部分</span>' +
+      '<span><i class="dot unpaid"></i>未收</span><span><i class="dot overdue"></i>逾期</span>' +
+      '<span><i class="dot nolog"></i>未登記</span><span><i class="dot vacant"></i>空置／到期</span></div></section>';
+    html += '<p class="src">點任一格即可登記或修改該月入帳</p>';
+
+    var recs = state.payments.filter(function (x) { return x.year === rentYear; })
+      .sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || b.month - a.month; });
+    html += sectionTitle(rentYear + " 年入帳紀錄", recs.length ? recs.length + " 筆" : "");
+    html += '<section class="card list">';
+    if (!recs.length) html += '<div class="row"><div class="l"><div class="ic">' + icon("grid") + '</div><div><div class="t">這一年還沒有入帳紀錄</div><div class="s">點上方格子即可登記</div></div></div></div>';
+    else {
+      recs.forEach(function (r) {
+        var p = propById(r.propertyId);
+        if (!p) return;
+        var short = r.actual + 0.0001 < r.expected;
+        html += '<button type="button" class="row" data-pay="' + esc(p.id) + '" data-y="' + r.year + '" data-m="' + r.month + '">' +
+          '<div class="l"><div class="ic mo n">' + r.month + "<small>月</small></div><div>" +
+          '<div class="t">' + esc(p.name) + "</div>" +
+          '<div class="s">' + (r.date ? fmtDate(r.date) : "—") + " 入帳 · " + esc(r.method) + "</div></div></div>" +
+          '<div class="r"><span class="' + (short ? "up" : "gold") + '">' + fmtMoney(r.actual, p.currency) + "</span><small>應收 " + fmtMoney(r.expected, p.currency) + "</small></div></button>";
+      });
+    }
+    html += "</section>";
+    return html + fab("quick-pay", "登記本月收租");
+  }
+
+  function renderExp() {
+    var html = hdr("exp", '<button type="button" class="iconbtn" data-act="new-exp" aria-label="新增支出">' + icon("plus") + "</button>");
+    if (!state.properties.length) {
+      return html + emptyCard("請先新增套房", "支出要記在某一間套房底下，請先建立套房。",
+        '<div class="btn-col"><button type="button" class="btn primary" data-act="new-prop">' + icon("plus") + "新增套房</button></div>");
+    }
+    var y = new Date().getFullYear(), m = new Date().getMonth() + 1;
+    var cur = pickCur();
+    var yt = 0, mt = 0, cnt = 0, byCat = {};
+    state.expenses.forEach(function (e) {
+      var p = propById(e.propertyId);
+      if (!p || p.currency !== cur) return;
+      var d = parseISO(e.date);
+      if (!d || d.getFullYear() !== y) return;
+      yt += num(e.amount, 0); cnt++;
+      if (d.getMonth() + 1 === m) mt += num(e.amount, 0);
+      byCat[e.category] = (byCat[e.category] || 0) + num(e.amount, 0);
+    });
+    var topCat = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; })[0];
+    html += '<section class="card hero">' + ringDeco() +
+      '<div class="label">' + y + " 年支出（" + curLabel(cur) + "）</div>" + bigMoney(yt, cur) +
+      '<div class="hero-sub"><span class="pill">本月 <b class="n">' + fmtMoney(mt, cur) + "</b></span><span>本年共 <b class=\"n\">" + cnt + "</b> 筆</span></div>" +
+      '<div class="grid3">' + kv("最大類別", topCat ? '<span class="cj">' + esc(topCat) + "</span>" : "—") + kv("類別金額", topCat ? fmtNum(byCat[topCat]) : "0") +
+      kv("佔全年", topCat && yt > 0 ? Math.round(byCat[topCat] / yt * 100) + "%" : "—") + "</div></section>";
+    html += curSeg(usedCurrencies(), cur, function (c) {
+      return state.expenses.filter(function (e) { var p = propById(e.propertyId); return p && p.currency === c; }).length;
+    });
+    var recs = state.expenses.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
+    if (!recs.length) {
+      return html + emptyCard("尚無支出", "修繕、物業管理費、水電、稅費或仲介費都可以記在這裡，報表會自動從租金收入裡扣掉。",
+        '<div class="btn-col"><button type="button" class="btn primary" data-act="new-exp">' + icon("plus") + "新增支出</button></div>") + fab("new-exp", "新增支出");
+    }
+    html += sectionTitle("支出明細", recs.length + " 筆");
+    html += '<section class="card list">';
+    recs.forEach(function (e) {
+      var p = propById(e.propertyId);
+      var c = p ? p.currency : "CNY";
+      html += '<button type="button" class="row" data-edit-exp="' + esc(e.id) + '">' +
+        '<div class="l"><div class="ic cat">' + esc((e.category || "支").charAt(0)) + "</div><div>" +
+        '<div class="t">' + esc(e.category) + ' <span class="tag">' + (p ? esc(p.name.replace(/【範例】/g, "")) : "未知房源") + "</span></div>" +
+        '<div class="s">' + (e.date ? fmtDate(e.date) : "未填日期") + (e.note ? " · " + esc(e.note) : "") + "</div></div></div>" +
+        '<div class="r"><span>' + fmtMoney(e.amount, c) + "</span></div></button>";
+    });
+    html += "</section>";
+    return html + fab("new-exp", "新增支出");
+  }
+
+  function yearIncome(y, cur) {
+    var months = [];
+    var income = 0, expense = 0;
+    var per = {};
+    state.properties.forEach(function (p) {
+      if (p.currency === cur) per[p.id] = { prop: p, income: 0, expense: 0 };
+    });
+    for (var m = 1; m <= 12; m++) {
+      var inc = 0, exp = 0;
+      state.properties.forEach(function (p) {
+        if (p.currency !== cur) return;
+        var pay = paymentFor(p.id, y, m);
+        if (pay) {
+          inc += num(pay.actual, 0);
+          if (per[p.id]) per[p.id].income += num(pay.actual, 0);
+        }
+      });
+      state.expenses.forEach(function (e) {
+        var p = propById(e.propertyId);
+        if (!p || p.currency !== cur) return;
+        if (!e.date) return;
+        var d = parseISO(e.date);
+        if (!d || d.getFullYear() !== y || d.getMonth() + 1 !== m) return;
+        exp += num(e.amount, 0);
+        if (per[p.id]) per[p.id].expense += num(e.amount, 0);
+      });
+      months.push({ m: m, income: inc, expense: exp, net: inc - exp });
+      income += inc;
+      expense += exp;
+    }
+    return { months: months, income: income, expense: expense, net: income - expense, per: per };
+  }
+
+  function renderRep() {
+    var html = hdr("rep", "");
+    html += yearSwitch(reportYear, "data-repyear-delta");
+    if (!state.properties.length) {
+      return html + emptyCard("尚無資料", "新增套房並登記入帳後，這裡會出現年度報表。", "");
+    }
+    usedCurrencies().forEach(function (cur) {
+      var r = yearIncome(reportYear, cur);
+      var months = r.months.filter(function (x) { return x.income || x.expense; }).length || 1;
+      html += '<section class="card hero">' + ringDeco() +
+        '<div class="label">' + reportYear + " 年淨收入（" + curLabel(cur) + "）</div>" + bigMoney(r.net, cur) +
+        '<div class="hero-sub"><span class="pill">月均 <b class="n">' + fmtMoney(Math.round(r.net / months), cur) + "</b></span><span>獨立統計，不與他幣相加</span></div>" +
+        '<div class="grid3">' + kv("收入", fmtNum(r.income), "gold") + kv("支出", fmtNum(r.expense), r.expense ? "up" : "") +
+        kv("淨收入", fmtNum(r.net), r.net < 0 ? "up" : "") + "</div></section>";
+      html += sectionTitle("逐月收支 · " + curLabel(cur), "");
+      html += '<section class="card"><div class="chart-box"><canvas id="chart-' + cur + '" width="640" height="220"></canvas></div></section>';
+      html += sectionTitle("逐月明細 · " + curLabel(cur), "");
+      html += '<section class="card"><table class="tb"><thead><tr><th>月份</th><th>收入</th><th>支出</th><th>淨收入</th></tr></thead><tbody>';
+      r.months.forEach(function (mo) {
+        html += "<tr><td>" + mo.m + "月</td><td>" + fmtNum(mo.income) + "</td><td>" + fmtNum(mo.expense) +
+          "</td><td" + (mo.net < 0 ? ' class="up"' : "") + ">" + fmtNum(mo.net) + "</td></tr>";
+      });
+      html += '<tr class="hl"><td>全年</td><td>' + fmtNum(r.income) + "</td><td>" + fmtNum(r.expense) + "</td><td>" + fmtNum(r.net) + "</td></tr>";
+      html += "</tbody></table></section>";
+      html += sectionTitle("各套房全年 · " + curLabel(cur), "");
+      html += '<section class="card"><table class="tb"><thead><tr><th>套房</th><th>收入</th><th>支出</th><th>淨收入</th></tr></thead><tbody>';
+      Object.keys(r.per).forEach(function (id) {
+        var x = r.per[id];
+        html += "<tr><td>" + esc(x.prop.name.replace(/【範例】/g, "")) + "</td><td>" + fmtNum(x.income) + "</td><td>" + fmtNum(x.expense) +
+          "</td><td>" + fmtNum(x.income - x.expense) + "</td></tr>";
+      });
+      html += "</tbody></table></section>";
+    });
+    html += '<p class="src">人民幣與台幣分開統計，絕不混加 · 金額單位為各自幣別</p>';
+    return html;
+  }
+
+  function drawAllCharts() {
+    usedCurrencies().forEach(function (cur) {
+      var canvas = document.getElementById("chart-" + cur);
+      if (!canvas) return;
+      var r = yearIncome(reportYear, cur);
+      drawBarChart(canvas, r.months, cur);
+    });
+  }
+
+  function drawBarChart(canvas, months, cur) {
+    var ctx = canvas.getContext("2d");
+    var dpr = window.devicePixelRatio || 1;
+    var cssW = canvas.clientWidth || 640;
+    var cssH = 200;
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+    function compactNum(n) {
+      if (Math.abs(n) >= 10000) {
+        var r = Math.round(n / 1000) / 10;
+        return r + "萬";
+      }
+      return String(Math.round(n));
+    }
+    function roundBar(x, y, w, h, rad) {
+      if (h <= 0) return;
+      var r = Math.min(rad, w / 2, h);
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h);
+      ctx.closePath();
+      ctx.fill();
+    }
+    var padL = 44, padR = 16, padT = 28, padB = 30;
+    var w = cssW - padL - padR, h = cssH - padT - padB;
+    var max = 0;
+    months.forEach(function (m) {
+      max = Math.max(max, m.income, m.expense, 0);
+    });
+    ctx.font = "12px 'Noto Serif CJK TC', 'Songti TC', serif";
+    if (max <= 0) {
+      ctx.fillStyle = "rgba(154,145,127,.85)";
+      ctx.textAlign = "center";
+      ctx.fillText("這一年尚無收支可以繪製", cssW / 2, cssH / 2);
+      return;
+    }
+    var rawStep = max * 1.1 / 4, mag = Math.pow(10, Math.floor(Math.log(rawStep) / Math.LN10));
+    var stepN = [1, 2, 2.5, 5, 10].map(function (k) { return k * mag; }).filter(function (k) { return k >= rawStep; })[0];
+    max = stepN * 4;
+    ctx.strokeStyle = "rgba(255,255,255,.06)";
+    ctx.fillStyle = "rgba(111,106,97,.95)";
+    ctx.font = "10px 'Noto Serif Display', Didot, Georgia, serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for (var i = 0; i <= 4; i++) {
+      var gy = padT + h * (1 - i / 4);
+      ctx.beginPath();
+      ctx.moveTo(padL, gy);
+      ctx.lineTo(padL + w, gy);
+      ctx.stroke();
+      ctx.fillText(compactNum(max * i / 4), padL - 8, gy);
+    }
+    var incGrad = ctx.createLinearGradient(0, padT, 0, padT + h);
+    incGrad.addColorStop(0, "#f6e6bd");
+    incGrad.addColorStop(1, "#a6844a");
+    var expGrad = ctx.createLinearGradient(0, padT, 0, padT + h);
+    expGrad.addColorStop(0, "#f0a097");
+    expGrad.addColorStop(1, "rgba(226,103,92,.45)");
+    var slot = w / 12;
+    var barW = Math.max(5, slot * 0.3);
+    var showVal = slot >= 44;
+    var showAllMonths = slot >= 20;
+    months.forEach(function (m, idx) {
+      var x0 = padL + slot * idx + (slot - barW * 2 - 3) / 2;
+      var ih = (m.income / max) * h;
+      var eh = (m.expense / max) * h;
+      ctx.fillStyle = incGrad;
+      roundBar(x0, padT + h - ih, barW, ih, 4);
+      ctx.fillStyle = expGrad;
+      roundBar(x0 + barW + 3, padT + h - eh, barW, eh, 4);
+      ctx.fillStyle = "rgba(111,106,97,1)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.font = "10px 'Noto Serif Display', Didot, Georgia, serif";
+      if (showAllMonths || m.m === 1 || m.m === 4 || m.m === 7 || m.m === 10 || m.m === 12) {
+        ctx.fillText(showVal ? (String(m.m) + "月") : String(m.m), padL + slot * idx + slot / 2, padT + h + 8);
+      }
+      if (showVal && m.income > 0) {
+        ctx.font = "10px 'Noto Serif Display', Didot, Georgia, serif";
+        ctx.fillStyle = "rgba(240,222,176,.95)";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(compactNum(m.income), x0 + barW / 2, padT + h - ih - 3);
+      }
+    });
+    ctx.font = "11px -apple-system, 'PingFang TC', 'Noto Sans CJK TC', sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = incGrad;
+    ctx.fillRect(padL, 8, 10, 8);
+    ctx.fillStyle = "rgba(240,222,176,.95)";
+    ctx.fillText("收入（" + curLabel(cur) + "）", padL + 16, 12);
+    ctx.fillStyle = expGrad;
+    ctx.fillRect(padL + 148, 8, 10, 8);
+    ctx.fillStyle = "rgba(240,160,151,.95)";
+    ctx.fillText("支出", padL + 164, 12);
+  }
+
+  function rowBtn(act, ic, t, s, cls) {
+    return '<button type="button" class="row" data-act="' + act + '"><div class="l"><div class="ic' + (cls ? " " + cls : "") + '">' + icon(ic) + "</div><div>" +
+      '<div class="t' + (cls === "red" ? " up" : "") + '">' + t + '</div><div class="s">' + s + "</div></div></div>" + icon("chevR", "chev") + "</button>";
+  }
+
+  function renderBak() {
+    var html = hdr("bak", "");
+    html += '<section class="card hero">' + ringDeco() +
+      '<div class="label">本機租務帳本</div>' +
+      '<div class="big n">' + state.payments.length + '<span class="unit">筆入帳</span></div>' +
+      '<div class="hero-sub"><span>只存在這部裝置</span><span class="pill"><b class="n">' + state.properties.length + "</b> 間套房</span></div>" +
+      '<div class="grid3">' + kv("套房", state.properties.length + "<small> 間</small>") + kv("收租紀錄", state.payments.length + "<small> 筆</small>") +
+      kv("支出", state.expenses.length + "<small> 筆</small>") + "</div></section>";
+    html += sectionTitle("資料備份", "");
+    html += '<section class="card list">' +
+      rowBtn("export-json", "down", "匯出備份檔", "下載全部套房、收租與支出（JSON）") +
+      rowBtn("import-json", "up", "匯入備份檔", "從備份檔還原，會覆蓋目前資料") +
+      rowBtn("export-csv", "sheet", "匯出收租明細表", "CSV 檔，可用 Excel 或 Numbers 開啟") +
+      '<input id="importFile" type="file" accept="application/json,.json" hidden></section>';
+    html += sectionTitle("範例資料", "");
+    html += '<section class="card list">' +
+      rowBtn("load-demo", "sample", "載入範例資料", "虛構的練習資料，載入前會先詢問是否覆蓋") +
+      rowBtn("clear-all", "trash", "清除全部資料", "無法復原，請先匯出備份", "red") + "</section>";
+    html += '<div class="disclaimer"><b>資料說明</b><br>所有帳目只存在這部裝置的瀏覽器中，換手機、清除瀏覽紀錄或換瀏覽器都會看不到。請定期把備份檔存到電腦或雲端硬碟。</div>';
+    return html;
+  }
+
+  function closeModal() {
+    var w = document.getElementById("overlay");
+    document.getElementById("overlayHost").innerHTML = "";
+    document.body.classList.remove("locked");
+    return w;
+  }
+
+  function openModal(inner) {
+    document.getElementById("overlayHost").innerHTML =
+      '<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true"><div class="modal-handle" aria-hidden="true"></div>' + inner + "</div></div>";
+    document.body.classList.add("locked");
+  }
+
+  function field(label, inner, span2) {
+    return '<div class="field' + (span2 ? " span2" : "") + '"><label>' + label + "</label>" + inner + "</div>";
+  }
+
+  function input(name, type, value, extra) {
+    return '<input name="' + name + '" type="' + type + '" value="' + esc(value == null ? "" : value) + '" ' + (extra || "") + ">";
+  }
+
+  function select(name, options, value) {
+    return '<select name="' + name + '">' + options.map(function (o) {
+      var v = typeof o === "string" ? o : o.v;
+      var t = typeof o === "string" ? o : o.t;
+      return '<option value="' + esc(v) + '"' + (v === value ? " selected" : "") + ">" + esc(t) + "</option>";
+    }).join("") + "</select>";
+  }
+
+  function openPropForm(id) {
+    var p = id ? propById(id) : {
+      id: "", name: "", address: "", currency: "CNY", monthlyRent: "", dueDay: 1, deposit: "",
+      status: "rented", tenantName: "", tenantPhone: "", leaseStart: "", leaseEnd: "",
+      depositReceived: false, depositReturned: false
+    };
+    var html = "<h3>" + (id ? "編輯套房" : "新增套房") + "</h3>" +
+      '<form id="propForm" data-id="' + esc(id || "") + '"><div class="form-grid">' +
+      field("套房名稱", input("name", "text", p.name, 'required placeholder="例如：金科天宸 A 棟 1701"'), true) +
+      field("地址／社區", input("address", "text", p.address, 'placeholder="例如：重慶金科天宸11街區"'), true) +
+      field("幣別", select("currency", [{ v: "CNY", t: "人民幣" }, { v: "TWD", t: "台幣" }], p.currency)) +
+      field("狀態", select("status", [{ v: "rented", t: "出租中" }, { v: "vacant", t: "空置" }], p.status)) +
+      field("每月租金", input("monthlyRent", "number", p.monthlyRent, 'min="0" step="0.01" required')) +
+      field("收租日（每月幾號）", input("dueDay", "number", p.dueDay, 'min="1" max="31" required')) +
+      field("押金金額", input("deposit", "number", p.deposit, 'min="0" step="0.01"')) +
+      field("押金狀態", '<label class="check">' + input("depositReceived", "checkbox", "1", p.depositReceived ? "checked" : "") + "已收取</label>" +
+        '<label class="check">' + input("depositReturned", "checkbox", "1", p.depositReturned ? "checked" : "") + "已退還</label>") +
+      '</div><hr class="sep"><h3 style="font-size:15px">租客與合約</h3><div class="form-grid">' +
+      field("租客姓名", input("tenantName", "text", p.tenantName)) +
+      field("電話", input("tenantPhone", "tel", p.tenantPhone)) +
+      field("合約開始", input("leaseStart", "date", p.leaseStart)) +
+      field("合約結束", input("leaseEnd", "date", p.leaseEnd)) +
+      '</div><div class="btn-row">' +
+      '<button type="submit" class="btn primary">儲存</button>' +
+      '<button type="button" class="btn ghost" data-act="close-modal">取消</button>' +
+      (id ? '<button type="button" class="btn danger" data-del-prop="' + esc(id) + '">刪除此套房</button>' : "") +
+      "</div></form>";
+    openModal(html);
+  }
+
+  function openPayForm(pid, y, m) {
+    var p = propById(pid);
+    if (!p) return;
+    var pay = paymentFor(pid, y, m);
+    var expected = pay ? pay.expected : (p.status === "vacant" ? 0 : p.monthlyRent);
+    var actual = pay ? pay.actual : expected;
+    var date = pay && pay.date ? pay.date : todayISO();
+    var method = pay ? pay.method : "轉帳";
+    var note = pay ? pay.note : "";
+    var html = "<h3>登記收租</h3>" +
+      '<p class="note" style="margin-top:-6px;margin-bottom:12px">' + esc(p.name) + "　" + y + "年" + m + "月　" + curLabel(p.currency) + "</p>" +
+      '<form id="payForm" data-pid="' + esc(pid) + '" data-y="' + y + '" data-m="' + m + '"><div class="form-grid">' +
+      field("應收金額", input("expected", "number", expected, 'min="0" step="0.01" required')) +
+      field("實收金額", input("actual", "number", actual, 'min="0" step="0.01" required')) +
+      field("入帳日期", input("date", "date", date, "required")) +
+      field("付款方式", select("method", METHODS, method)) +
+      field("備註", '<textarea name="note" placeholder="可填帳號後五碼、遲繳原因等">' + esc(note) + "</textarea>", true) +
+      '</div><div class="btn-row">' +
+      '<button type="submit" class="btn primary">儲存</button>' +
+      '<button type="button" class="btn ghost" data-act="close-modal">取消</button>' +
+      (pay ? '<button type="button" class="btn danger" data-del-pay="' + esc(pay.id) + '">刪除此筆</button>' : "") +
+      "</div></form>";
+    openModal(html);
+  }
+
+  function openQuickPay() {
+    if (!state.properties.length) { toast("請先新增套房"); return; }
+    var now = new Date();
+    var y = now.getFullYear(), m = now.getMonth() + 1;
+    var rows = state.properties.map(function (p) {
+      var pay = paymentFor(p.id, y, m);
+      var expected = pay ? pay.expected : (p.status === "vacant" ? 0 : p.monthlyRent);
+      var actual = pay ? pay.actual : (p.status === "vacant" ? "" : expected);
+      var date = pay && pay.date ? pay.date : todayISO();
+      var method = pay ? pay.method : "轉帳";
+      return '<div class="quick-row" data-qid="' + esc(p.id) + '">' +
+        "<div><div>" + esc(p.name) + ' <span class="badge ' + (p.status === "vacant" ? "vacant" : "rented") + '">' +
+        (p.status === "vacant" ? "空置" : "出租中") + "</span></div>" +
+        '<div class="dim" style="font-size:12px">應收 ' + fmtMoney(expected, p.currency) + "</div>" +
+        '<input type="hidden" name="expected" value="' + esc(expected) + '">' +
+        '<div class="form-grid" style="margin-top:6px">' +
+        field("實收金額", '<input type="number" name="actual" min="0" step="0.01" value="' + esc(actual) + '" placeholder="空白則略過">') +
+        field("入帳日期", '<input type="date" name="date" value="' + esc(date) + '">') +
+        field("付款方式", select("method", METHODS, method), true) +
+        "</div></div></div>";
+    }).join("");
+    var html = "<h3>登記本月收租</h3>" +
+      '<p class="note" style="margin-top:-6px;margin-bottom:8px">' + y + "年" + m + "月　實收留白的套房會略過，不會改動原紀錄。</p>" +
+      '<div class="btn-row" style="margin-bottom:8px"><button type="button" class="btn sm" data-act="fill-all-paid">一鍵填入全額已收</button></div>' +
+      '<form id="quickForm" data-y="' + y + '" data-m="' + m + '">' + rows +
+      '<div class="btn-row"><button type="submit" class="btn primary">儲存已填寫的套房</button>' +
+      '<button type="button" class="btn ghost" data-act="close-modal">取消</button></div></form>';
+    openModal(html);
+  }
+
+  function openExpForm(id) {
+    if (!state.properties.length) { toast("請先新增套房"); return; }
+    var e = id ? state.expenses.filter(function (x) { return x.id === id; })[0] : null;
+    e = e || { id: "", propertyId: state.properties[0].id, category: "修繕", date: todayISO(), amount: "", note: "" };
+    var opts = state.properties.map(function (p) { return { v: p.id, t: p.name + "（" + curLabel(p.currency) + "）" }; });
+    var html = "<h3>" + (id ? "編輯支出" : "新增支出") + "</h3>" +
+      '<form id="expForm" data-id="' + esc(id || "") + '"><div class="form-grid">' +
+      field("套房", select("propertyId", opts, e.propertyId), true) +
+      field("類別", select("category", EXPENSE_CATS, e.category)) +
+      field("日期", input("date", "date", e.date, "required")) +
+      field("金額", input("amount", "number", e.amount, 'min="0" step="0.01" required')) +
+      field("備註", '<textarea name="note">' + esc(e.note || "") + "</textarea>", true) +
+      '</div><div class="btn-row">' +
+      '<button type="submit" class="btn primary">儲存</button>' +
+      '<button type="button" class="btn ghost" data-act="close-modal">取消</button>' +
+      (id ? '<button type="button" class="btn danger" data-del-exp="' + esc(id) + '">刪除此筆</button>' : "") +
+      "</div></form>";
+    openModal(html);
+  }
+
+  function confirmBox(msg, onYes) {
+    var html = "<h3>請確認</h3><p>" + esc(msg) + '</p><div class="btn-row">' +
+      '<button type="button" class="btn danger" id="confirmYes">確定</button>' +
+      '<button type="button" class="btn ghost" data-act="close-modal">取消</button></div>';
+    openModal(html);
+    document.getElementById("confirmYes").addEventListener("click", function () {
+      closeModal();
+      onYes();
+    });
+  }
+
+  function fd(form) {
+    var o = {};
+    Array.prototype.forEach.call(form.elements, function (el) {
+      if (!el.name) return;
+      if (el.type === "checkbox") o[el.name] = el.checked;
+      else o[el.name] = el.value;
+    });
+    return o;
+  }
+
+  function saveProp(form) {
+    var o = fd(form);
+    if (!String(o.name || "").trim()) { toast("請填套房名稱"); return; }
+    var id = form.getAttribute("data-id");
+    var rec = {
+      id: id || uid(),
+      name: String(o.name).trim(),
+      address: String(o.address || "").trim(),
+      currency: o.currency === "TWD" ? "TWD" : "CNY",
+      monthlyRent: num(o.monthlyRent, 0),
+      dueDay: Math.min(31, Math.max(1, num(o.dueDay, 1))),
+      deposit: num(o.deposit, 0),
+      status: o.status === "vacant" ? "vacant" : "rented",
+      tenantName: String(o.tenantName || "").trim(),
+      tenantPhone: String(o.tenantPhone || "").trim(),
+      leaseStart: o.leaseStart || "",
+      leaseEnd: o.leaseEnd || "",
+      depositReceived: !!o.depositReceived,
+      depositReturned: !!o.depositReturned
+    };
+    if (id) {
+      state.properties = state.properties.map(function (p) { return p.id === id ? rec : p; });
+    } else {
+      state.properties.push(rec);
+    }
+    save();
+    closeModal();
+    view = "props";
+    render();
+    toast("已儲存套房");
+  }
+
+  function upsertPayment(pid, y, m, fields) {
+    var existing = paymentFor(pid, y, m);
+    var rec = {
+      id: existing ? existing.id : uid(),
+      propertyId: pid,
+      year: Number(y),
+      month: Number(m),
+      expected: num(fields.expected, 0),
+      actual: num(fields.actual, 0),
+      date: fields.date || todayISO(),
+      method: METHODS.indexOf(fields.method) >= 0 ? fields.method : "轉帳",
+      note: String(fields.note || "")
+    };
+    if (existing) {
+      state.payments = state.payments.map(function (p) { return p.id === existing.id ? rec : p; });
+    } else {
+      state.payments.push(rec);
+    }
+  }
+
+  function savePay(form) {
+    var o = fd(form);
+    upsertPayment(form.getAttribute("data-pid"), form.getAttribute("data-y"), form.getAttribute("data-m"), o);
+    save();
+    closeModal();
+    render();
+    toast("已記入帳");
+  }
+
+  function saveQuick(form) {
+    var y = Number(form.getAttribute("data-y"));
+    var m = Number(form.getAttribute("data-m"));
+    var rows = form.querySelectorAll(".quick-row");
+    var n = 0;
+    Array.prototype.forEach.call(rows, function (row) {
+      var actualEl = row.querySelector('[name="actual"]');
+      if (!actualEl || String(actualEl.value).trim() === "") return;
+      var expectedEl = row.querySelector('[name="expected"]');
+      var dateEl = row.querySelector('[name="date"]');
+      var methodEl = row.querySelector('[name="method"]');
+      upsertPayment(row.getAttribute("data-qid"), y, m, {
+        expected: expectedEl ? expectedEl.value : 0,
+        actual: actualEl.value,
+        date: dateEl ? dateEl.value : todayISO(),
+        method: methodEl ? methodEl.value : "轉帳",
+        note: ""
+      });
+      n++;
+    });
+    save();
+    closeModal();
+    render();
+    toast(n ? "已登記 " + n + " 間本月收租" : "沒有填寫任何實收，未變更");
+  }
+
+  function saveExp(form) {
+    var o = fd(form);
+    var id = form.getAttribute("data-id");
+    var rec = {
+      id: id || uid(),
+      propertyId: o.propertyId,
+      category: EXPENSE_CATS.indexOf(o.category) >= 0 ? o.category : "其他",
+      date: o.date || todayISO(),
+      amount: num(o.amount, 0),
+      note: String(o.note || "")
+    };
+    if (id) {
+      state.expenses = state.expenses.map(function (e) { return e.id === id ? rec : e; });
+    } else {
+      state.expenses.push(rec);
+    }
+    save();
+    closeModal();
+    view = "exp";
+    render();
+    toast("已儲存支出");
+  }
+
+  function deleteProp(id) {
+    var p = propById(id);
+    confirmBox("確定刪除「" + (p ? p.name : "此套房") + "」？相關收租與支出紀錄也會一併刪除。", function () {
+      state.properties = state.properties.filter(function (x) { return x.id !== id; });
+      state.payments = state.payments.filter(function (x) { return x.propertyId !== id; });
+      state.expenses = state.expenses.filter(function (x) { return x.propertyId !== id; });
+      save();
+      render();
+      toast("已刪除套房");
+    });
+  }
+
+  function deletePay(id) {
+    confirmBox("確定刪除這筆收租紀錄？", function () {
+      state.payments = state.payments.filter(function (x) { return x.id !== id; });
+      save();
+      render();
+      toast("已刪除收租紀錄");
+    });
+  }
+
+  function deleteExp(id) {
+    confirmBox("確定刪除這筆支出？", function () {
+      state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
+      save();
+      view = "exp";
+      render();
+      toast("已刪除支出");
+    });
+  }
+
+  function ymShift(iso, months) {
+    var d = parseISO(iso) || new Date();
+    var y = d.getFullYear();
+    var m = d.getMonth() + 1 + months;
+    while (m <= 0) { m += 12; y--; }
+    while (m > 12) { m -= 12; y++; }
+    var day = Math.min(d.getDate(), daysInMonth(y, m));
+    return y + "-" + pad(m) + "-" + pad(day);
+  }
+
+  function loadDemo() {
+    var run = function () {
+      var t = todayISO();
+      var now = new Date();
+      var y = now.getFullYear();
+      var m = now.getMonth() + 1;
+      var prevY = m === 1 ? y - 1 : y;
+      var prevM = m === 1 ? 12 : m - 1;
+      var p1 = uid(), p2 = uid(), p3 = uid(), p4 = uid();
+      state = {
+        properties: [
+          normProp({
+            id: p1, name: "【範例】金科天宸 A棟1701", address: "重慶金科天宸11街區",
+            currency: "CNY", monthlyRent: 3500, dueDay: 5, deposit: 3500, status: "rented",
+            tenantName: "陳小明（範例）", tenantPhone: "13800000000",
+            leaseStart: ymShift(t, -8), leaseEnd: ymShift(t, 4),
+            depositReceived: true, depositReturned: false
+          }),
+          normProp({
+            id: p2, name: "【範例】金科天宸 B棟802", address: "重慶金科天宸11街區",
+            currency: "CNY", monthlyRent: 2800, dueDay: 10, deposit: 2800, status: "vacant",
+            tenantName: "", tenantPhone: "", leaseStart: "", leaseEnd: "",
+            depositReceived: false, depositReturned: false
+          }),
+          normProp({
+            id: p3, name: "【範例】金科天宸 C棟1205", address: "重慶金科天宸11街區",
+            currency: "CNY", monthlyRent: 4200, dueDay: 1, deposit: 4200, status: "rented",
+            tenantName: "林美玲（範例）", tenantPhone: "13900000000",
+            leaseStart: ymShift(t, -14), leaseEnd: ymShift(t, 1),
+            depositReceived: true, depositReturned: false
+          }),
+          normProp({
+            id: p4, name: "【範例】台北信義套房", address: "台北市信義區（範例）",
+            currency: "TWD", monthlyRent: 28000, dueDay: 8, deposit: 56000, status: "rented",
+            tenantName: "周先生（範例）", tenantPhone: "0912000000",
+            leaseStart: ymShift(t, -6), leaseEnd: ymShift(t, 6),
+            depositReceived: true, depositReturned: false
+          })
+        ],
+        payments: [],
+        expenses: [
+          normExp({ propertyId: p1, category: "物業管理費", date: dueISO(y, m, 3), amount: 280, note: "範例本月物業費" }),
+          normExp({ propertyId: p3, category: "修繕", date: ymShift(t, -1), amount: 650, note: "範例：更換水龍頭" })
+        ]
+      };
+      function fillPaid(pid, rent, dueDay, method, fromISO, partialYm) {
+        var d = parseISO(fromISO);
+        if (!d) return;
+        var yy = d.getFullYear(), mm = d.getMonth() + 1;
+        var guard = 0;
+        while (guard++ < 24 && (yy < y || (yy === y && mm < m))) {
+          var key = yy + "-" + mm;
+          if (partialYm && key === partialYm) {
+            state.payments.push(normPay({
+              propertyId: pid, year: yy, month: mm, expected: rent,
+              actual: Math.round(rent * 0.48), date: dueISO(yy, mm, Math.min(28, dueDay + 3)),
+              method: "微信", note: "範例：先付一部分"
+            }));
+          } else {
+            state.payments.push(normPay({
+              propertyId: pid, year: yy, month: mm, expected: rent, actual: rent,
+              date: dueISO(yy, mm, dueDay), method: method
+            }));
+          }
+          mm++;
+          if (mm > 12) { mm = 1; yy++; }
+        }
+      }
+      fillPaid(p1, 3500, 5, "轉帳", state.properties[0].leaseStart);
+      fillPaid(p3, 4200, 1, "支付寶", state.properties[2].leaseStart, prevY + "-" + prevM);
+      fillPaid(p4, 28000, 8, "轉帳", state.properties[3].leaseStart);
+      save();
+      view = "home";
+      render();
+      toast("已載入範例資料，可隨時清除");
+    };
+    if (state.properties.length || state.payments.length || state.expenses.length) {
+      confirmBox("載入範例資料會覆蓋目前帳本裡的所有資料。確定繼續？", run);
+    } else run();
+  }
+
+  function clearAll() {
+    confirmBox("確定清除全部套房、收租與支出？此動作無法復原，請先匯出備份。", function () {
+      state = { properties: [], payments: [], expenses: [] };
+      save();
+      view = "home";
+      render();
+      toast("已清除全部資料");
+    });
+  }
+
+  function download(filename, text, mime) {
+    var blob = new Blob([text], { type: mime || "text/plain;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () {
+      URL.revokeObjectURL(a.href);
+      a.remove();
+    }, 400);
+  }
+
+  function exportJSON() {
+    var payload = {
+      version: 1,
+      app: "收租帳本",
+      savedAt: todayISO(),
+      properties: state.properties,
+      payments: state.payments,
+      expenses: state.expenses
+    };
+    download("收租帳本-備份-" + todayISO() + ".json", JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+    toast("已匯出備份檔");
+  }
+
+  function csvCell(s) {
+    var t = String(s == null ? "" : s);
+    if (/[",\n]/.test(t)) return '"' + t.replace(/"/g, '""') + '"';
+    return t;
+  }
+
+  function exportCSV() {
+    var lines = ["套房,地址,幣別,年,月,應收,實收,入帳日期,付款方式,備註"];
+    var recs = state.payments.slice().sort(function (a, b) {
+      if (a.year !== b.year) return a.year - b.year;
+      if (a.month !== b.month) return a.month - b.month;
+      return (a.date || "").localeCompare(b.date || "");
+    });
+    recs.forEach(function (r) {
+      var p = propById(r.propertyId);
+      lines.push([
+        csvCell(p ? p.name : ""),
+        csvCell(p ? p.address : ""),
+        csvCell(p ? curLabel(p.currency) : ""),
+        r.year, r.month, r.expected, r.actual, r.date, csvCell(r.method), csvCell(r.note)
+      ].join(","));
+    });
+    download("收租帳本-收租明細-" + todayISO() + ".csv", "\ufeff" + lines.join("\n"), "text/csv;charset=utf-8");
+    toast("已匯出收租明細表");
+  }
+
+  function importJSONFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(String(reader.result));
+        if (!data || !Array.isArray(data.properties)) {
+          toast("備份檔格式不正確");
+          return;
+        }
+        confirmBox("匯入後會覆蓋目前帳本裡的所有資料。確定繼續？", function () {
+          state = normalize(data);
+          save();
+          view = "home";
+          render();
+          toast("已匯入備份");
+        });
+      } catch (err) {
+        toast("無法讀取這個檔案");
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function fillAllPaid() {
+    var form = document.getElementById("quickForm");
+    if (!form) return;
+    Array.prototype.forEach.call(form.querySelectorAll(".quick-row"), function (row) {
+      var expected = row.querySelector('[name="expected"]');
+      var actual = row.querySelector('[name="actual"]');
+      var date = row.querySelector('[name="date"]');
+      if (actual && expected) actual.value = expected.value;
+      if (date && !date.value) date.value = todayISO();
+    });
+    toast("已填入全額，請再按儲存");
+  }
+
+  function onClick(e) {
+    var t = e.target.closest("[data-go],[data-act],[data-pay],[data-edit-prop],[data-edit-exp],[data-del-prop],[data-del-pay],[data-del-exp],[data-year-delta],[data-repyear-delta],[data-cur]");
+    if (!t) {
+      if (e.target.id === "overlay") closeModal();
+      return;
+    }
+    if (t.hasAttribute("data-go")) { go(t.getAttribute("data-go")); return; }
+    if (t.hasAttribute("data-cur")) { homeCur = t.getAttribute("data-cur"); render(); return; }
+    if (t.hasAttribute("data-act")) {
+      var act = t.getAttribute("data-act");
+      if (act === "new-prop") openPropForm("");
+      else if (act === "quick-pay") openQuickPay();
+      else if (act === "new-exp") openExpForm("");
+      else if (act === "close-modal") closeModal();
+      else if (act === "load-demo") loadDemo();
+      else if (act === "clear-all") clearAll();
+      else if (act === "export-json") exportJSON();
+      else if (act === "import-json") {
+        var inp = document.getElementById("importFile");
+        if (inp) inp.click();
+      } else if (act === "export-csv") exportCSV();
+      else if (act === "fill-all-paid") fillAllPaid();
+      return;
+    }
+    if (t.hasAttribute("data-year-delta")) {
+      rentYear += Number(t.getAttribute("data-year-delta"));
+      render();
+      return;
+    }
+    if (t.hasAttribute("data-repyear-delta")) {
+      reportYear += Number(t.getAttribute("data-repyear-delta"));
+      render();
+      return;
+    }
+    if (t.hasAttribute("data-edit-prop")) { openPropForm(t.getAttribute("data-edit-prop")); return; }
+    if (t.hasAttribute("data-edit-exp")) { openExpForm(t.getAttribute("data-edit-exp")); return; }
+    if (t.hasAttribute("data-del-prop")) { deleteProp(t.getAttribute("data-del-prop")); return; }
+    if (t.hasAttribute("data-del-pay")) { deletePay(t.getAttribute("data-del-pay")); return; }
+    if (t.hasAttribute("data-del-exp")) { deleteExp(t.getAttribute("data-del-exp")); return; }
+    if (t.hasAttribute("data-pay")) {
+      openPayForm(t.getAttribute("data-pay"), Number(t.getAttribute("data-y")), Number(t.getAttribute("data-m")));
+    }
+  }
+
+  function onSubmit(e) {
+    var form = e.target;
+    if (form.id === "propForm") { e.preventDefault(); saveProp(form); }
+    else if (form.id === "payForm") { e.preventDefault(); savePay(form); }
+    else if (form.id === "quickForm") { e.preventDefault(); saveQuick(form); }
+    else if (form.id === "expForm") { e.preventDefault(); saveExp(form); }
+  }
+
+  function onChange(e) {
+    if (e.target.id === "importFile" && e.target.files && e.target.files[0]) {
+      importJSONFile(e.target.files[0]);
+      e.target.value = "";
+    }
+  }
+
+  document.addEventListener("click", onClick);
+  document.addEventListener("submit", onSubmit);
+  document.addEventListener("change", onChange);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeModal();
+  });
+
+  load();
+  render();
+})();
+
+</script>
+</body>
+</html>
